@@ -17,7 +17,8 @@ classifiers = [
 ]
 dependencies = [
   'httpx',
-  'fastcore'
+  'fastcore',
+  'jsonref'
 ]
 
 [project.urls]
