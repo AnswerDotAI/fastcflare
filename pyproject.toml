@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fastcflare"
+dynamic = ["version"]
+description = "Complete access to the Cloudflare SDK"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "Apache-2.0"}
+authors = [{name = "Jeremy Howard", email = "github@jhoward.fastmail.fm"}]
+keywords = ['nbdev']
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+]
+dependencies = [
+  'httpx',
+  'fastcore'
+]
+
+[project.urls]
+Repository = "https://github.com/AnswerDotAI/fastcflare"
+Documentation = "https://AnswerDotAI.github.io/fastcflare/"
+
+[project.entry-points.nbdev]
+fastcflare = "fastcflare._modidx:d"
+
+[tool.setuptools.dynamic]
+version = {attr = "fastcflare.__version__"}
+
+[tool.setuptools.packages.find]
+include = ["fastcflare"]
+
+[tool.setuptools.package-data]
+fastcaddy = ["openapi.json"]
+
+[tool.nbdev]
+

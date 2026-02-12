@@ -1,0 +1,9 @@
+project:
+  output-dir: _docs
+
+website:
+  title: "fastcflare"
+  site-url: "https://AnswerDotAI.github.io/fastcflare"
+  description: "Complete access to the Cloudflare SDK"
+  repo-branch: main
+  repo-url: "https://github.com/AnswerDotAI/fastcflare"
