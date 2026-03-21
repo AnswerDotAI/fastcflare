@@ -34,8 +34,5 @@ version = {attr = "fastcflare.__version__"}
 [tool.setuptools.packages.find]
 include = ["fastcflare"]
 
-[tool.setuptools.package-data]
-fastcaddy = ["openapi.json"]
-
 [tool.nbdev]
 

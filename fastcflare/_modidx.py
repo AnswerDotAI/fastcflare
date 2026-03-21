@@ -32,4 +32,6 @@ d = { 'settings': { 'branch': 'main',
                                  'fastcflare.core._mk_sig': ('core.html#_mk_sig', 'fastcflare/core.py'),
                                  'fastcflare.core._op2name': ('core.html#_op2name', 'fastcflare/core.py'),
                                  'fastcflare.core._tag2res': ('core.html#_tag2res', 'fastcflare/core.py'),
-                                 'fastcflare.core.build_cf_eps': ('core.html#build_cf_eps', 'fastcflare/core.py')}}}
+                                 'fastcflare.core.build_cf_eps': ('core.html#build_cf_eps', 'fastcflare/core.py')},
+            'fastcflare.eps': {},
+            'fastcflare.mkeps': {}}}
