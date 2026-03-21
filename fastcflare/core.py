@@ -120,8 +120,9 @@ class _CfVerb:
     def __call__(self, *args, **kwargs):
         flds = self.pparams + [p['name'] for p in self.qparams] + [p['name'] for p in self.data]
         for a,b in zip(args, flds): kwargs[b] = a
-        route_p,query_p,data_p = [{p:kwargs[p] for p in o if p in kwargs}
-                                   for o in (self.pparams, [p['name'] for p in self.qparams], [p['name'] for p in self.data])]
+        route_p,query_p,data_p = [{p:kwargs.pop(p) for p in list(o) if p in kwargs}
+            for o in (self.pparams, [p['name'] for p in self.qparams], [p['name'] for p in self.data])]
+        if kwargs and self.verb in ('post','put','patch'): data_p.update(kwargs)
         return self.client(self.path, self.verb, route=route_p, query=query_p, data=data_p)
 
 # %% ../nbs/00_core.ipynb #e5c73b99
@@ -149,8 +150,10 @@ class CloudflareApi:
 
     def __call__(self, path, verb=None, headers=None, route=None, query=None, data=None):
         path, verb, headers, query, data = self._prep(path, verb, headers, route, query, data)
-        resp = httpx.request(verb, f"{self.base_url}/{path}", headers=headers, params=query, json=data).raise_for_status()
-        return dict2obj(resp.json())
+        resp = httpx.request(verb, f"{self.base_url}/{path}", headers=headers, params=query, json=data)
+        res = dict2obj(resp.json())
+        if not res.success: raise Exception(f'{verb.upper()} /{path}: {res.errors}')
+        return res
 
     def verify(self):
         if self.account_id: return self(f'/accounts/{self.account_id}/tokens/verify')
@@ -159,3 +162,13 @@ class CloudflareApi:
     def __dir__(self): return super().__dir__() + list(self.groups)
     def _repr_markdown_(self): return "\n".join(f"- {o}" for o in sorted(self.groups))
     def __getattr__(self, k): return self.groups[k] if 'groups' in vars(self) and k in self.groups else stop(AttributeError(k))
+
+# %% ../nbs/00_core.ipynb #de443569
+@patch
+def create_token(self:CloudflareApi, doms, perm_names, name, grp='account.zone.'):
+    "Create a scoped Cloudflare API token for given domains and permission names"
+    pref = 'com.cloudflare.api.'+grp
+    pgs = self.user_api_tokens.permission_groups_list_permission_groups().result
+    perms = [dict(id=p.id) for p in pgs if p.name in perm_names]
+    zids = {f'{pref}{self.zone.get(name=d).result[0].id}':'*' for d in doms}
+    return self.user_api_tokens.create_token(name=name, policies=[dict(effect='allow', resources=zids, permission_groups=perms)])
