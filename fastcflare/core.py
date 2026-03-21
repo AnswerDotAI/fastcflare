@@ -132,7 +132,7 @@ class CloudflareApi:
         store_attr()
         if api_key: self.hdrs = {'X-Auth-Email': email, 'X-Auth-Key': api_key, 'Content-Type': 'application/json'}
         else: self.hdrs = {'Authorization': f'Bearer {token}', 'Content-Type': 'application/json'}
-        verbs = _dedup_verbs(L(eps).map(lambda x: _CfVerb(**x, client=self)))
+        verbs = _dedup_verbs(L(build_cf_eps()).map(lambda x: _CfVerb(**x, client=self)))
         self.groups = {k: _CfVerbGroup(k,v) for k,v in groupby(verbs, 'res').items()}
 
     def _prep(self, path, verb, headers, route, query, data):
