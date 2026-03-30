@@ -7,7 +7,7 @@ __all__ = ['eps', 'cf_api_url', 'build_cf_eps', 'CloudflareApi']
 from fastcore.utils import *
 
 import httpx
-from inspect import Parameter,Signature
+from inspect import Parameter,Signature,signature
 from jsonref import loads as jloads
 
 from .eps import eps as _eps
@@ -45,11 +45,20 @@ _lu_type = dict(zip(
     map(PrettyString,'object str dict list bool int int'.split())
 ))
 
+def _schema_props(schema):
+    "Extract properties from a schema, handling anyOf/allOf nesting"
+    if not schema: return {}
+    if 'properties' in schema: return schema['properties']
+    res = {}
+    for p in schema.get('anyOf') or schema.get('allOf') or []: res.update(_schema_props(p))
+    return res
+
 def _cf_info(desc):
-    data = nested_idx(desc, *'requestBody content application/json schema properties'.split()) or {}
-    data = [_deets(*o) for o in data.items()]
+    schema = nested_idx(desc, *'requestBody content application/json schema'.split()) or {}
+    data = [_deets(*o) for o in _schema_props(schema).items()]
     params = desc.get('parameters', [])
-    qparams = [dict(name=p['name'], description=p.get('description','')) for p in params if p.get('in')=='query']
+    qparams = [dict(name=p['name'], description=p.get('description','') or p.get('schema',{}).get('description',''),
+        annotation=_lu_type[p.get('schema',{}).get('type','NA')]) for p in params if p.get('in')=='query']
     return dict(data=data, op_id=desc.get('operationId',''), qparams=qparams, summary=desc.get('summary',''),
                 tags=desc.get('tags',[]))
 
@@ -62,6 +71,7 @@ def build_cf_eps():
 
 # %% ../nbs/00_core.ipynb #2550ecd9
 eps = L(_eps)
+
 
 # %% ../nbs/00_core.ipynb #f12db393
 def _dedup_verbs(verbs):
@@ -100,7 +110,9 @@ class _CfVerbGroup:
         self.name,self.verbs = name,verbs
         for o in verbs: setattr(self, o.name, o)
     def __str__(self): return "\n".join(str(v) for v in self.verbs)
-    def _repr_markdown_(self): return "\n".join(f'- {v._repr_markdown_()}' for v in self.verbs)
+    def _repr_markdown_(self): return "\n".join(f'- {v._short_repr}' for v in self.verbs)
+    def __dir__(self): return [v.name for v in self.verbs]
+    __repr__ = __str__
 
 # %% ../nbs/00_core.ipynb #322aef28
 class _CfVerb:
@@ -111,12 +123,19 @@ class _CfVerb:
         path, *_ = partial_format(path)
         self.pparams = stringfmt_names(path)
         store_attr()
+        pdocs = {p['name']:p['description'] for p in qparams+data if p.get('description')}
+        params = '\n'.join(f'- {k}: {v}' for k,v in pdocs.items())
+        self.__doc__ = f'{summary}\n\n{params}' if params else summary
+        self.__qualname__ = f'{self.res}.{self.name}'
 
     @property
     def __signature__(self): return _mk_sig(self.pparams, self.qparams, self.data)
-    def __str__(self): return f'{self.res}.{self.name}{signature(self)}'
-    def _repr_markdown_(self): return f'{self.res}.{self.name}{self.__signature__}: *{self.summary}*'
-    __repr__ = _repr_markdown_
+    @property
+    def __name__(self): return self.name
+    @property
+    def _short_repr(self): return f'{self.res}.{self.name}{self.__signature__}: *{self.summary}*'
+    def _repr_markdown_(self): return f'**{self.res}.{self.name}**`{self.__signature__}`\n\n{self.__doc__}'
+    __repr__ = __str__ = _repr_markdown_
 
     def __call__(self, *args, **kwargs):
         flds = self.pparams + [p['name'] for p in self.qparams] + [p['name'] for p in self.data]
