@@ -1,0 +1,72 @@
+[
+  {
+    "objectID": "00_core.html",
+    "href": "00_core.html",
+    "title": "fastcflare",
+    "section": "",
+    "text": "acctok = os.environ['CLOUDFLARE_ACC_TOK']\nusrtok = os.environ['CLOUDFLARE_USR_TOK']\nacctid = os.environ['CLOUDFLARE_ACCT_ID']\nacceml = os.environ['CLOUDFLARE_EML_ADD']\n\n\nbase = 'https://api.cloudflare.com/client/v4'\n\n\nuhdrs = {'Authorization': f'Bearer {usrtok}'}\nr = httpx.get(f'{base}/user/tokens/verify', headers=uhdrs)\nr.json()['success']\n\nTrue\n\n\n\nahdrs = {'Authorization': f'Bearer {acctok}'}\nr = httpx.get(f'{base}/accounts/{acctid}/tokens/verify', headers=ahdrs)\nr.json()['success']\n\nTrue\n\n\n\nglbtok = os.environ['CLOUDFLARE_API_KEY']\n\nghdrs = {'X-Auth-Email': acceml, 'X-Auth-Key': glbtok, 'Content-Type': 'application/json'}\nr = httpx.get(f'{base}/user', headers=ghdrs)\nr.json()['success']\n\nTrue\n\n\n\nr = httpx.get(f'{base}/zones', headers=uhdrs)\n[(z['name'], z['id'][:8]) for z in r.json()['result'][:1]]\n\n[('aaa.as', '6afde8dc')]\n\n\n\nr = httpx.get(f'{base}/zones', headers=ahdrs, params={'account.id': acctid})\n[(z['name'], z['id'][:8]) for z in r.json()['result'][:1]]\n\n[('aaa.as', '6afde8dc')]",
+    "crumbs": [
+      "FastCF"
+    ]
+  },
+  {
+    "objectID": "00_core.html#fastcf",
+    "href": "00_core.html#fastcf",
+    "title": "fastcflare",
+    "section": "",
+    "text": "acctok = os.environ['CLOUDFLARE_ACC_TOK']\nusrtok = os.environ['CLOUDFLARE_USR_TOK']\nacctid = os.environ['CLOUDFLARE_ACCT_ID']\nacceml = os.environ['CLOUDFLARE_EML_ADD']\n\n\nbase = 'https://api.cloudflare.com/client/v4'\n\n\nuhdrs = {'Authorization': f'Bearer {usrtok}'}\nr = httpx.get(f'{base}/user/tokens/verify', headers=uhdrs)\nr.json()['success']\n\nTrue\n\n\n\nahdrs = {'Authorization': f'Bearer {acctok}'}\nr = httpx.get(f'{base}/accounts/{acctid}/tokens/verify', headers=ahdrs)\nr.json()['success']\n\nTrue\n\n\n\nglbtok = os.environ['CLOUDFLARE_API_KEY']\n\nghdrs = {'X-Auth-Email': acceml, 'X-Auth-Key': glbtok, 'Content-Type': 'application/json'}\nr = httpx.get(f'{base}/user', headers=ghdrs)\nr.json()['success']\n\nTrue\n\n\n\nr = httpx.get(f'{base}/zones', headers=uhdrs)\n[(z['name'], z['id'][:8]) for z in r.json()['result'][:1]]\n\n[('aaa.as', '6afde8dc')]\n\n\n\nr = httpx.get(f'{base}/zones', headers=ahdrs, params={'account.id': acctid})\n[(z['name'], z['id'][:8]) for z in r.json()['result'][:1]]\n\n[('aaa.as', '6afde8dc')]",
+    "crumbs": [
+      "FastCF"
+    ]
+  },
+  {
+    "objectID": "00_core.html#build-endpoint-dict",
+    "href": "00_core.html#build-endpoint-dict",
+    "title": "fastcflare",
+    "section": "Build endpoint dict",
+    "text": "Build endpoint dict\n\nsource\n\nbuild_cf_eps\n\ndef build_cf_eps(\n    \n):\n\nCall self as a function.\n\neps_test = L(build_cf_eps())\nlen(eps_test), eps_test[0]\n\n(2575,\n {'path': '/accounts',\n  'verb': 'get',\n  'data': [],\n  'op_id': 'accounts-list-accounts',\n  'qparams': [{'name': 'name',\n    'description': 'Name of the account.',\n    'annotation': str},\n   {'name': 'page',\n    'description': 'Page number of paginated results.',\n    'annotation': int},\n   {'name': 'per_page',\n    'description': 'Maximum number of results per page.',\n    'annotation': int},\n   {'name': 'direction',\n    'description': 'Direction to order results.',\n    'annotation': str}],\n  'summary': 'List Accounts',\n  'tags': ['Accounts']})",
+    "crumbs": [
+      "FastCF"
+    ]
+  },
+  {
+    "objectID": "00_core.html#create-api-client",
+    "href": "00_core.html#create-api-client",
+    "title": "fastcflare",
+    "section": "Create API client",
+    "text": "Create API client\n\nsource\n\nCloudflareApi\n\ndef CloudflareApi(\n    token:NoneType=None, account_id:NoneType=None, email:NoneType=None, api_key:NoneType=None,\n    base_url:str='https://api.cloudflare.com/client/v4'\n):\n\nCloudflare API client supporting both user and account tokens\n\nucf = CloudflareApi(token=usrtok)\nucf.verify().result.status\n\n'active'\n\n\n\nacf = CloudflareApi(token=acctok, account_id=acctid)\nacf.verify().result.status\n\n'active'\n\n\n\nucf('/zones').result[0].name, acf('/zones').result[0].name\n\n('aaa.as', 'aaa.as')\n\n\n\nzid = ucf('/zones').result[0].id\nucf.dns_records_zone.list_dns_records(zone_id=zid).result[0].name\n\n'*.aaa.as'\n\n\n\nacf.dns_records_zone.list_dns_records(zone_id=zid).result[0].name\n\n'*.aaa.as'\n\n\n\nucf.zone\n\n\nzone.get(name: str = None, status: str = None, account_id: str = None, account_name: str = None, page: int = None, per_page: int = None, order: str = None, direction: str = None, match: str = None): List Zones\nzone.post(account: dict = None, name: str = None, type: str = ‘full’): Create Zone\nzone.delete(zone_id): Delete Zone\nzone.get_zone_id(zone_id): Zone Details\nzone.patch(zone_id, paused: bool = False, plan: dict = None, type: str = None, vanity_name_servers: list = []): Edit Zone\nzone.put_zones_zone_id_activation_check(zone_id): Rerun the Activation Check\nzone.purge(zone_id, tags: list = None, hosts: list = None, prefixes: list = None, purge_everything: bool = None, files: list = None): Purge Cached Content\n\n\n\n\nucf.zone.get().result[0].name\n\n'aaa.as'\n\n\n\nucf.dns_records_zone.list_dns_records(zone_id=zid).result[0].name\n\n'*.aaa.as'\n\n\n\nsource\n\n\nCloudflareApi.create_token\n\ndef create_token(\n    doms, perm_names, name, grp:str='account.zone.'\n):\n\nCreate a scoped Cloudflare API token for given domains and permission names",
+    "crumbs": [
+      "FastCF"
+    ]
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "FastCF",
+    "section": "",
+    "text": "from fastcore.utils import *\nfrom fastcflare import *",
+    "crumbs": [
+      "FastCF"
+    ]
+  },
+  {
+    "objectID": "index.html#quickstart",
+    "href": "index.html#quickstart",
+    "title": "FastCF",
+    "section": "Quickstart",
+    "text": "Quickstart\n\nfrom fastcflare import *\n\n\nusrtok = os.environ['CLOUDFLARE_USR_TOK']\n\n\nucf = CloudflareApi(token=usrtok)\nucf.verify().result.status\n\n'active'\n\n\n\nucf('/zones').result[0].name\n\n'aaa.as'\n\n\n\nCreate a token\nThis token would have access to manage DNS for a single domain:\nacceml = os.environ['CLOUDFLARE_EML_ADD']\nglbtok = os.environ['CLOUDFLARE_API_KEY']\ngcf = CloudflareApi(email=acceml, api_key=glbtok)\n\ndoms = ['xxx']\npnms = ('Zone Read', 'DNS Write')\ntok = ucf.create_token(doms, pnms, 'domain mgt')\nprint(tok.result.value)\nThen use it like this, e.g to create and delete a domain:\ndomnm = 'xxx'\nzones = ucf.zone.get(name=domnm).result\nzid_sp = zones[0].id\n\ndcf = CloudflareApi(token=tok.result.value)\nprint(dcf.dns_records_zone.list_dns_records(zone_id=zid_sp).result[:3])\nrec = dcf.dns_records_zone.create_dns_record(zid_sp, type='A', name='test-delete-me.xxx', content='192.0.2.1', ttl=1)\nprint(rec.result.id, rec.result.name)\nprint(dcf.dns_records_zone.delete_dns_record(zid_sp, rec.result.id).result.id)",
+    "crumbs": [
+      "FastCF"
+    ]
+  },
+  {
+    "objectID": "index.html#intro-to-account-tokens",
+    "href": "index.html#intro-to-account-tokens",
+    "title": "FastCF",
+    "section": "Intro to Account Tokens",
+    "text": "Intro to Account Tokens\nAccount-owned API tokens (created via /accounts/{id}/tokens) are tied to the account, not a specific user. They act as service principals — ideal for CI/CD pipelines and service-to-service integrations, since they remain valid even if the creating user leaves the organisation.\n\nCreating Account Tokens\nYou need a token with “Create Additional Tokens” permission at the account level. Use the Cloudflare Python SDK with the Global API Key + email (not a user token):\nfrom cloudflare import Cloudflare\ncf = Cloudflare(api_token=your_cf_token, api_email='you@example.com')\naccts = cf.accounts.list()\nacct_id = accts.result[0].id\nLook up available permission groups for your account:\ngroups = cf.accounts.tokens.permission_groups.list(account_id=acct_id)\n{g.name: g.id for g in groups if 'dns' in g.name.lower() or 'zone' in g.name.lower()}\nCreate the token with nested resource format — zones must be nested under the account:\ntok = cf.accounts.tokens.create(account_id=acct_id, name=\"dns-all-zones\", policies=[{\n    \"effect\": \"allow\",\n    \"resources\": {f\"com.cloudflare.api.account.{acct_id}\": {\"com.cloudflare.api.account.zone.*\": \"*\"}},\n    \"permission_groups\": [\n        {\"id\": \"c8fed203ed3043cba015a93ad1616f1f\"},  # Zone Read\n        ...\n    ]\n}])\ndns_tok = tok.value  # Save this — it's only shown once\n⚠️ The resource format {\"com.cloudflare.api.account.zone.*\": \"*\"} (without nesting) will fail with: “Must specify a zone for account owned tokens, or nest zone under specific account resource”",
+    "crumbs": [
+      "FastCF"
+    ]
+  }
+]
