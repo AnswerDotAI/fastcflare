@@ -16,9 +16,7 @@ classifiers = [
     "Programming Language :: Python :: 3 :: Only",
 ]
 dependencies = [
-  'httpx',
-  'fastcore',
-  'jsonref'
+  'fastspec'
 ]
 
 [project.urls]
