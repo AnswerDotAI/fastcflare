@@ -61,20 +61,6 @@ class CloudflareApi:
     def _repr_markdown_(self): return "\n".join(f"- {o}" for o in sorted(self.groups))
     def __getattr__(self, k): return self.groups[k] if 'groups' in vars(self) and k in self.groups else stop(AttributeError(k))
 
-# %% ../nbs/00_core.ipynb #0951a9c6
-from fastspec.oapi import OpFunc, _join_url, _path
-
-# %% ../nbs/00_core.ipynb #3d08fed8
-@patch
-async def __call__(self:OpFunc, *args, **kwargs):
-    stream, headers, route, query, body, files = self._split(self._bind(args, kwargs))
-    url = _join_url(self.base_url, _path(self.path, route_params=route))
-    if files: kw = dict(body=None, files=files, data=self.form_encoder(body) or None)
-    elif self.request_content_type == "application/x-www-form-urlencoded": kw = dict(body=None, data=self.form_encoder(body))
-    else: kw = dict(body=body)
-    if stream: return self._stream(url, headers=headers, query=query, route=route, **kw)
-    return dict2obj(await self._request(url, headers=headers, query=query, route=route, **kw))
-
 # %% ../nbs/00_core.ipynb #de443569
 @patch
 async def create_token(self:CloudflareApi, doms, perm_names, name, grp='account.zone.'):
