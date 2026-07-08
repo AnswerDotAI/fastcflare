@@ -68,5 +68,5 @@ async def create_token(self:CloudflareApi, doms, perm_names, name, grp='account.
     pref = 'com.cloudflare.api.'+grp
     pgs = (await self.user_api_tokens.permission_groups_list_permission_groups()).result
     perms = [dict(id=p.id) for p in pgs if p.name in perm_names]
-    zids = {f'{pref}{(await self.zone.get(name=d)).result[0].id}':'*' for d in doms}
+    zids = {f'{pref}{(await self.zone.get("", name=d)).result[0].id}':'*' for d in doms}
     return await self.user_api_tokens.create_token(name=name, policies=[dict(effect='allow', resources=zids, permission_groups=perms)])
