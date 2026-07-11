@@ -8,18 +8,65 @@ from fastcore.utils import *
 from fastcflare import *
 ```
 
+## Quickstart
+
+``` python
+from fastcflare import *
+```
+
+``` python
+usrtok = os.environ['CLOUDFLARE_USR_TOK']
+```
+
+``` python
+ucf = CloudflareApi(token=usrtok)
+(await ucf.verify()).result.status
+```
+
+    'active'
+
+``` python
+(await ucf.zone.get('')).result[0].name
+```
+
+    'aaa.as'
+
+### Create a token
+
+This token would have access to manage DNS for a single domain:
+
+``` py
+acceml = os.environ['CLOUDFLARE_EML_ADD']
+glbtok = os.environ['CLOUDFLARE_API_KEY']
+gcf = CloudflareApi(email=acceml, api_key=glbtok)
+
+doms = ['xxx']
+pnms = ('Zone Read', 'DNS Write')
+tok = await ucf.create_token(doms, pnms, 'domain mgt')
+print(tok.result.value)
+```
+
+Then use it like this, e.g to create and delete a domain:
+
+``` python
+domnm = 'xxx'
+zones = (await ucf.zone.get(name=domnm)).result
+zid_sp = zones[0].id
+
+dcf = CloudflareApi(token=tok.result.value)
+print((await dcf.dns_records_zone.list_dns_records(zone_id=zid_sp)).result[:3])
+rec = await dcf.dns_records_zone.create_dns_record(zid_sp, type='A', name='test-delete-me.xxx', content='192.0.2.1', ttl=1)
+print(rec.result.id, rec.result.name)
+print((await dcf.dns_records_zone.delete_dns_record(zid_sp, rec.result.id)).result.id)
+```
+
 ## Intro to Account Tokens
 
-Account-owned API tokens (created via `/accounts/{id}/tokens`) are tied
-to the **account**, not a specific user. They act as service principals
-— ideal for CI/CD pipelines and service-to-service integrations, since
-they remain valid even if the creating user leaves the organisation.
+Account-owned API tokens (created via `/accounts/{id}/tokens`) are tied to the **account**, not a specific user. They act as service principals — ideal for CI/CD pipelines and service-to-service integrations, since they remain valid even if the creating user leaves the organisation.
 
 ### Creating Account Tokens
 
-You need a token with “Create Additional Tokens” permission at the
-account level. Use the Cloudflare Python SDK with the **Global API
-Key** + email (not a user token):
+You need a token with “Create Additional Tokens” permission at the account level. Use the Cloudflare Python SDK with the **Global API Key** + email (not a user token):
 
 ``` python
 from cloudflare import Cloudflare
@@ -35,8 +82,7 @@ groups = cf.accounts.tokens.permission_groups.list(account_id=acct_id)
 {g.name: g.id for g in groups if 'dns' in g.name.lower() or 'zone' in g.name.lower()}
 ```
 
-Create the token with **nested resource format** — zones must be nested
-under the account:
+Create the token with **nested resource format** — zones must be nested under the account:
 
 ``` python
 tok = cf.accounts.tokens.create(account_id=acct_id, name="dns-all-zones", policies=[{
@@ -50,6 +96,4 @@ tok = cf.accounts.tokens.create(account_id=acct_id, name="dns-all-zones", polici
 dns_tok = tok.value  # Save this — it's only shown once
 ```
 
-⚠️ The resource format `{"com.cloudflare.api.account.zone.*": "*"}`
-(without nesting) will fail with: *“Must specify a zone for account
-owned tokens, or nest zone under specific account resource”*
+⚠️ The resource format `{"com.cloudflare.api.account.zone.*": "*"}` (without nesting) will fail with: *“Must specify a zone for account owned tokens, or nest zone under specific account resource”*
