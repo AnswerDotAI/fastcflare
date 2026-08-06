@@ -20,4 +20,5 @@ d = { 'settings': { 'branch': 'main',
                                  'fastcflare.core.cf_group_func': ('core.html#cf_group_func', 'fastcflare/core.py'),
                                  'fastcflare.core.cf_names': ('core.html#cf_names', 'fastcflare/core.py')},
             'fastcflare.eps': {},
-            'fastcflare.mkeps': {}}}
+            'fastcflare.mkeps': {},
+            'fastcflare.skill': {}}}
