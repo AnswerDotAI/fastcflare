@@ -26,6 +26,9 @@ Documentation = "https://AnswerDotAI.github.io/fastcflare/"
 [project.entry-points.nbdev]
 fastcflare = "fastcflare._modidx:d"
 
+[project.entry-points.pyskills]
+fastcflare = "fastcflare.skill"
+
 [tool.setuptools.dynamic]
 version = {attr = "fastcflare.__version__"}
 
