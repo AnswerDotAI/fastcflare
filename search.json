@@ -1,0 +1,62 @@
+[
+  {
+    "objectID": "00_core.html",
+    "href": "00_core.html",
+    "title": "fastcflare",
+    "section": "",
+    "text": "import httpx\nfrom collections import Counter\n\n\nacctok = os.getenv('CLOUDFLARE_ACC_TOK')\nusrtok = os.environ['CLOUDFLARE_USR_TOK']\nacctid = os.getenv('CLOUDFLARE_ACCT_ID')\nacceml = os.getenv('CLOUDFLARE_EML_ADD')\n\n\nbase = 'https://api.cloudflare.com/client/v4'\n\n\nuhdrs = {'Authorization': f'Bearer {usrtok}'}\nr = httpx.get(f'{base}/user/tokens/verify', headers=uhdrs)\nr.json()['success']\n\nTrue\n\n\n\nif acctok and acctid:\n    ahdrs = {'Authorization': f'Bearer {acctok}'}\n    r = httpx.get(f'{base}/accounts/{acctid}/tokens/verify', headers=ahdrs)\n    print(r.json()['success'])\n\nTrue\n\n\n\nglbtok = os.getenv('CLOUDFLARE_API_KEY')\nif acceml and glbtok:\n    ghdrs = {'X-Auth-Email': acceml, 'X-Auth-Key': glbtok, 'Content-Type': 'application/json'}\n    r = httpx.get(f'{base}/user', headers=ghdrs)\n    print(r.json()['success'])\n\nTrue\n\n\n\nr = httpx.get(f'{base}/zones', headers=uhdrs)\n[(z['name'], z['id'][:8]) for z in r.json()['result'][:1]]\n\n[('aaa.as', '6afde8dc')]\n\n\n\nif acctok and acctid:\n    r = httpx.get(f'{base}/zones', headers=ahdrs, params={'account.id': acctid})\n    print([(z['name'], z['id'][:8]) for z in r.json()['result'][:1]])\n\n[('aaa.as', '6afde8dc')]",
+    "crumbs": [
+      "FastCF"
+    ]
+  },
+  {
+    "objectID": "00_core.html#fastcf",
+    "href": "00_core.html#fastcf",
+    "title": "fastcflare",
+    "section": "",
+    "text": "import httpx\nfrom collections import Counter\n\n\nacctok = os.getenv('CLOUDFLARE_ACC_TOK')\nusrtok = os.environ['CLOUDFLARE_USR_TOK']\nacctid = os.getenv('CLOUDFLARE_ACCT_ID')\nacceml = os.getenv('CLOUDFLARE_EML_ADD')\n\n\nbase = 'https://api.cloudflare.com/client/v4'\n\n\nuhdrs = {'Authorization': f'Bearer {usrtok}'}\nr = httpx.get(f'{base}/user/tokens/verify', headers=uhdrs)\nr.json()['success']\n\nTrue\n\n\n\nif acctok and acctid:\n    ahdrs = {'Authorization': f'Bearer {acctok}'}\n    r = httpx.get(f'{base}/accounts/{acctid}/tokens/verify', headers=ahdrs)\n    print(r.json()['success'])\n\nTrue\n\n\n\nglbtok = os.getenv('CLOUDFLARE_API_KEY')\nif acceml and glbtok:\n    ghdrs = {'X-Auth-Email': acceml, 'X-Auth-Key': glbtok, 'Content-Type': 'application/json'}\n    r = httpx.get(f'{base}/user', headers=ghdrs)\n    print(r.json()['success'])\n\nTrue\n\n\n\nr = httpx.get(f'{base}/zones', headers=uhdrs)\n[(z['name'], z['id'][:8]) for z in r.json()['result'][:1]]\n\n[('aaa.as', '6afde8dc')]\n\n\n\nif acctok and acctid:\n    r = httpx.get(f'{base}/zones', headers=ahdrs, params={'account.id': acctid})\n    print([(z['name'], z['id'][:8]) for z in r.json()['result'][:1]])\n\n[('aaa.as', '6afde8dc')]",
+    "crumbs": [
+      "FastCF"
+    ]
+  },
+  {
+    "objectID": "00_core.html#cloudflareapi",
+    "href": "00_core.html#cloudflareapi",
+    "title": "fastcflare",
+    "section": "CloudflareApi",
+    "text": "CloudflareApi\nCloudflare’s operationIds are machine artifacts (zones-get vs zones-0-get — the -0- is a generator’s dedup counter), so rather than cleaning them up we name every op mechanically from its verb and path: the group is the path’s non-parameter segments, nested (zones.dns_records), and the method is the HTTP verb — except that when a group has both a collection GET and a single-item GET they become list and get. Two fixups keep the whole surface collision-free: sibling paths differing only by an interior parameter gain a _by_&lt;param&gt; suffix, and an action segment that would shadow an op folds into its parent as &lt;segment&gt;_&lt;verb&gt;. So GET /zones is zones.list, GET /zones/{zone_id} is zones.get, and GET /user/tokens/verify is user.tokens.verify.get — a user who knows the URL knows the call.\n\nsource\n\ncf_names\ndef cf_names(\n    spec\n):\nMap each op’s canonical (verb, snaked-segments) key to (group_segments, op_name), collision-free across the surface\n\nsource\n\n\ncf_group_func\ndef cf_group_func(\n    names\n):\nA fastspec group_func looking up precomputed names by canonical verb+path\n\ncli = OpenAPIClient(_cf_spec(), headers={'Authorization': f'Bearer {usrtok}', 'Content-Type': 'application/json'})\nsorted(cli.groups)\n\n['accounts',\n 'certificates',\n 'internal',\n 'ips',\n 'live',\n 'memberships',\n 'organizations',\n 'radar',\n 'ready',\n 'signed_url',\n 'system',\n 'tenants',\n 'user',\n 'users',\n 'zones']\n\n\nThe naming is only trustworthy if it can never silently collide — OpGroup exposes ops with setattr, so a duplicate name would shadow its sibling (exactly the bug this design replaces). This walk asserts the built tree is clean: within every group, op names are unique (duplicates allowed only for the same endpoint spelled two ways in the spec) and no op shares a name with a subgroup.\n\ndef _surface_ok(g):\n    nms = [o.name for o in g.ops]\n    for n,c in Counter(nms).items():\n        if c&gt;1: assert len({tuple(snake(s) for s in o.op_spec.path.strip('/').split('/')) for o in g.ops if o.name==n})==1, f'dup op {g.name}.{n}'\n    assert not set(nms)&set(g.subgroups), f'op/subgroup shadow in {g.name}: {set(nms)&set(g.subgroups)}'\n    for sg in g.subgroups.values(): _surface_ok(sg)\n\nfor grp in cli.groups.values(): _surface_ok(grp)\nlen(cli.groups), len(cli.groups['zones'].subgroups)\n\n(15, 60)\n\n\n\nsource\n\n\nCloudflareApi\ndef CloudflareApi(\n    token:NoneType=None, account_id:NoneType=None, email:NoneType=None, api_key:NoneType=None\n):\nCloudflare API client supporting both user and account tokens\n\nucf = CloudflareApi(token=usrtok)\n(await ucf.verify()).result.status\n\n'active'\n\n\n\nif acctok and acctid:\n    acf = CloudflareApi(token=acctok, account_id=acctid)\n    print((await acf.verify()).result.status)\n\nactive\n\n\nListing and fetching zones are now distinct calls: zones.list filters the collection, zones.get takes a zone_id.\n\nucf.zones.list\n\nList Zones\nParameters: - name (str, optional) - status (str, optional) - account_id (str, optional) - account_name (str, optional) - order (str, optional) - direction (str, optional) - page (float, default: 1) - per_page (float, default: 20) - match (str, default: ‘all’)\n\n\n\n(await ucf.zones.list(name='answer.ai')).result[0].name\n\n'answer.ai'\n\n\n\nzid = (await ucf.zones.list()).result[0].id\n(await ucf.zones.dns_records.list(zone_id=zid)).result[0].name\n\n'*.aaa.as'\n\n\n\nif acctok and acctid: print((await acf.zones.dns_records.list(zone_id=zid)).result[0].name)\n\n*.aaa.as\n\n\n\nsource\n\n\nCloudflareApi.create_token\nasync def create_token(\n    doms, perm_names, name, grp:str='account.zone.'\n):\nCreate a scoped Cloudflare API token for given domains and permission names\n\npgs = (await ucf.user.tokens.permission_groups.get()).result\n[p.name for p in pgs if 'DNS' in p.name or 'Zone' in p.name][:20]\n\n['Account DNS Settings Read',\n 'Account DNS Settings Write',\n 'Cloudflare Zero Trust Secure DNS Locations Write',\n 'DNS Firewall Read',\n 'DNS Firewall Write',\n 'DNS Read',\n 'DNS View Read',\n 'DNS View Write',\n 'DNS Write',\n 'Zone Custom Asset Read',\n 'Zone Custom Asset Write',\n 'Zone DNS Settings Read',\n 'Zone DNS Settings Write',\n 'Zone Read',\n 'Zone Security Center Insights Read',\n 'Zone Security Center Insights Write',\n 'Zone Settings Read',\n 'Zone Settings Write',\n 'Zone Transform Rules Read',\n 'Zone Transform Rules Write']\n\n\nWith two domains, the policy must carry two distinct zone resources — under the old colliding surface the name filter was silently dropped, every domain resolved to the same zone, and the dict collapsed them to one:\n\ntok = await ucf.create_token(['answer.ai', 'aaa.as'], ['Zone Read'], 'fastcflare-test-token')\nassert len(tok.result.policies[0].resources)==2\ntok.success, tok.result.name\n\n(True, 'fastcflare-test-token')\n\n\nClean up the token we just created:\n\nres = await ucf.user.tokens.delete(tok.result.id)\nassert res.success",
+    "crumbs": [
+      "FastCF"
+    ]
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "FastCF",
+    "section": "",
+    "text": "from fastcore.utils import *\nfrom fastcflare import *",
+    "crumbs": [
+      "FastCF"
+    ]
+  },
+  {
+    "objectID": "index.html#quickstart",
+    "href": "index.html#quickstart",
+    "title": "FastCF",
+    "section": "Quickstart",
+    "text": "Quickstart\n\nfrom fastcflare import *\n\n\nusrtok = os.environ['CLOUDFLARE_USR_TOK']\n\n\nucf = CloudflareApi(token=usrtok)\n(await ucf.verify()).result.status\n\n'active'\n\n\n\n(await ucf.zones.list()).result[0].name\n\n'aaa.as'\n\n\n\nCreate a token\nThis token would have access to manage DNS for a single domain:\nacceml = os.environ['CLOUDFLARE_EML_ADD']\nglbtok = os.environ['CLOUDFLARE_API_KEY']\ngcf = CloudflareApi(email=acceml, api_key=glbtok)\n\ndoms = ['xxx']\npnms = ('Zone Read', 'DNS Write')\ntok = await ucf.create_token(doms, pnms, 'domain mgt')\nprint(tok.result.value)\nThen use it like this, e.g to create and delete a domain:\ndomnm = 'xxx'\nzones = (await ucf.zones.list(name=domnm)).result\nzid_sp = zones[0].id\n\ndcf = CloudflareApi(token=tok.result.value)\nprint((await dcf.zones.dns_records.list(zone_id=zid_sp)).result[:3])\nrec = await dcf.zones.dns_records.post(zid_sp, type='A', name='test-delete-me.xxx', content='192.0.2.1', ttl=1)\nprint(rec.result.id, rec.result.name)\nprint((await dcf.zones.dns_records.delete(zid_sp, rec.result.id)).result.id)",
+    "crumbs": [
+      "FastCF"
+    ]
+  },
+  {
+    "objectID": "index.html#intro-to-account-tokens",
+    "href": "index.html#intro-to-account-tokens",
+    "title": "FastCF",
+    "section": "Intro to Account Tokens",
+    "text": "Intro to Account Tokens\nAccount-owned API tokens (created via /accounts/{id}/tokens) are tied to the account, not a specific user. They act as service principals — ideal for CI/CD pipelines and service-to-service integrations, since they remain valid even if the creating user leaves the organisation.\n\nCreating Account Tokens\nYou need a token with “Create Additional Tokens” permission at the account level. Use the Cloudflare Python SDK with the Global API Key + email (not a user token):\nfrom cloudflare import Cloudflare\ncf = Cloudflare(api_token=your_cf_token, api_email='you@example.com')\naccts = cf.accounts.list()\nacct_id = accts.result[0].id\nLook up available permission groups for your account:\ngroups = cf.accounts.tokens.permission_groups.list(account_id=acct_id)\n{g.name: g.id for g in groups if 'dns' in g.name.lower() or 'zone' in g.name.lower()}\nCreate the token with nested resource format — zones must be nested under the account:\ntok = cf.accounts.tokens.create(account_id=acct_id, name=\"dns-all-zones\", policies=[{\n    \"effect\": \"allow\",\n    \"resources\": {f\"com.cloudflare.api.account.{acct_id}\": {\"com.cloudflare.api.account.zone.*\": \"*\"}},\n    \"permission_groups\": [\n        {\"id\": \"c8fed203ed3043cba015a93ad1616f1f\"},  # Zone Read\n        ...\n    ]\n}])\ndns_tok = tok.value  # Save this — it's only shown once\n⚠️ The resource format {\"com.cloudflare.api.account.zone.*\": \"*\"} (without nesting) will fail with: “Must specify a zone for account owned tokens, or nest zone under specific account resource”",
+    "crumbs": [
+      "FastCF"
+    ]
+  }
+]
