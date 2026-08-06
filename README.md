@@ -26,7 +26,7 @@ ucf = CloudflareApi(token=usrtok)
     'active'
 
 ``` python
-(await ucf.zone.get('')).result[0].name
+(await ucf.zones.list()).result[0].name
 ```
 
     'aaa.as'
@@ -50,14 +50,14 @@ Then use it like this, e.g to create and delete a domain:
 
 ``` python
 domnm = 'xxx'
-zones = (await ucf.zone.get(name=domnm)).result
+zones = (await ucf.zones.list(name=domnm)).result
 zid_sp = zones[0].id
 
 dcf = CloudflareApi(token=tok.result.value)
-print((await dcf.dns_records_zone.list_dns_records(zone_id=zid_sp)).result[:3])
-rec = await dcf.dns_records_zone.create_dns_record(zid_sp, type='A', name='test-delete-me.xxx', content='192.0.2.1', ttl=1)
+print((await dcf.zones.dns_records.list(zone_id=zid_sp)).result[:3])
+rec = await dcf.zones.dns_records.post(zid_sp, type='A', name='test-delete-me.xxx', content='192.0.2.1', ttl=1)
 print(rec.result.id, rec.result.name)
-print((await dcf.dns_records_zone.delete_dns_record(zid_sp, rec.result.id)).result.id)
+print((await dcf.zones.dns_records.delete(zid_sp, rec.result.id)).result.id)
 ```
 
 ## Intro to Account Tokens
