@@ -2,6 +2,14 @@
 
 <!-- do not remove -->
 
+## 0.0.6
+
+### New Features
+
+- skill ([#8](https://github.com/AnswerDotAI/fastcflare/issues/8))
+- Derive API names from URL paths instead of operationIds, giving nested collision-free groups like zones.`dns_records`.list ([#7](https://github.com/AnswerDotAI/fastcflare/issues/7))
+
+
 ## 0.0.5
 
 ### New Features
@@ -29,4 +37,3 @@
 ### Bugs Squashed
 
 - Fix/exports ([#1](https://github.com/AnswerDotAI/fastcflare/pull/1)), thanks to [@RensDimmendaal](https://github.com/RensDimmendaal)
-
