@@ -1,4 +1,4 @@
-"""Cloudflare API access via `CloudflareApi`: zones, DNS records, API tokens, caching, and every other Cloudflare v4 feature from Python. Use this for day-to-day Cloudflare work instead of hand-built httpx calls against api.cloudflare.com.
+"""Cloudflare API access via `CloudflareApi`: zones, DNS records, caching, and every other Cloudflare v4 feature from Python. Use this for day-to-day Cloudflare work instead of hand-built httpx calls against api.cloudflare.com.
 
 `fastcflare` wraps the entire Cloudflare v4 API (~2,500 operations), generated from Cloudflare's own OpenAPI spec when a client is constructed. All calls are async: `await` every API call (notebooks and modern REPLs support top-level `await`; scripts use `asyncio.run`).
 
