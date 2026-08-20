@@ -97,3 +97,7 @@ dns_tok = tok.value  # Save this — it's only shown once
 ```
 
 ⚠️ The resource format `{"com.cloudflare.api.account.zone.*": "*"}` (without nesting) will fail with: *“Must specify a zone for account owned tokens, or nest zone under specific account resource”*
+
+## Development
+
+The op surface comes from `cf_spec.py`, Cloudflare’s OpenAPI schema in fastspec’s compact form. Refresh it from Cloudflare’s published schema with `tools/build.py`, then review the diff: op names can shift when the schema changes.

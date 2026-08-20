@@ -63,7 +63,7 @@ Account-owned tokens (service principals, valid even after the creating user lea
 # Gotchas
 
 - Everything is async, including `verify` and `create_token`: a forgotten `await` gives a coroutine, not an envelope.
-- The generated surface reflects the bundled `openapi.json` spec, so op names can shift when the spec is updated: URLs are the stable vocabulary, and the naming rule maps them to calls.
+- The generated surface reflects the bundled `cf_spec` module, so op names can shift when the spec is updated: URLs are the stable vocabulary, and the naming rule maps them to calls.
 - Cloudflare token *values* are never retrievable after creation; `user.tokens.get(token_id)` returns metadata only.
 """
 
