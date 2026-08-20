@@ -2,6 +2,13 @@
 
 <!-- do not remove -->
 
+## 0.1.1
+
+### New Features
+
+- Ship precompiled `cf_spec`.py compact spec instead of raw openapi.json, with `build_spec` to regenerate it from Cloudflare schema ([#9](https://github.com/AnswerDotAI/fastcflare/issues/9))
+
+
 ## 0.1.0
 
 ### New Features
