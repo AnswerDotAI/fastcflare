@@ -10,11 +10,13 @@ Three credential shapes, matching Cloudflare's own:
     cf = CloudflareApi(token=acc_tok, account_id=acct_id)   # account-owned token
     cf = CloudflareApi(email=eml, api_key=global_key)       # global API key + email
 
-With no `token`/`api_key`, the token falls back to the `CF_API_TOKEN` env var (and `email` to `CF_API_EMAIL` when `api_key` is given). `await cf.verify()` checks the credential -- it picks the user or account verify endpoint based on `account_id` -- and `.result.status` should be `'active'`.
+With no `token` or `api_key`, the token falls back to the `CF_API_TOKEN` environment variable. When `api_key` is given, `email` falls back to `CF_API_EMAIL`.
+
+`await cf.verify()` checks the credentials. It selects the user or account verification endpoint based on `account_id`. Check that `.result.status` is `'active'`.
 
 # Names are computed from the URL
 
-Cloudflare's operationIds are machine artifacts, so every op is named mechanically from its verb and path instead:
+`fastcflare` does not use Cloudflare's operation IDs as method names. It names each operation from its HTTP verb and URL path:
 
 - The group is the path's non-parameter segments, nested: `/zones/{zone_id}/dns_records` ops live at `cf.zones.dns_records`.
 - The method is the HTTP verb: `.post`, `.put`, `.patch`, `.delete` -- except that when a group has both a collection GET and a single-item GET, they are `.list` and `.get` (`GET /zones` is `cf.zones.list`, `GET /zones/{zone_id}` is `cf.zones.get`). A group with only one GET keeps plain `.get`, whichever kind it is.
@@ -31,9 +33,21 @@ Discovery is a drill-down, and `doc()` works at every level of a live instance:
     pyskills.xdir(cf.zones, 'cache')  # search a big group's names; the query is a case-insensitive regex
     doc(cf.zones.dns_records.post)  # one op: full parameter docs -- required/optional, defaults, per-param descriptions
 
-Displaying any object bare shows the same as `doc()` on it. Groups nest deep (`zones` has 60 subgroups, `radar` 24), so `xdir` beats reading a whole group listing: it returns op and subgroup names together, and a hit that is a subgroup (e.g. `purge_cache`) is itself displayable and descendable. The instance must be live because groups are generated at construction: inspecting the `CloudflareApi` *class* shows only `verify` and `create_token`.
+Displaying any object bare shows the same as `doc()` on it.
 
-To find the op for a task when you don't know where it lives, work URL-first: find the endpoint in Cloudflare's API docs (or guess its path segments) and read the call off the URL with the naming rule above. Failing that, search the whole surface: `full_docs(cf.groups)` renders every group and op as one markdown reference (~430k chars), so search it rather than display it -- e.g. rgapi's `rgstr(pattern, full_docs(cf.groups))` -- and each hit line shows the dotted call path.
+Groups contain nested subgroups: `zones` has 60 subgroups and `radar` has 24. Use `xdir` to search large groups instead of reading their full listings. It returns operation and subgroup names together. Display a matching subgroup, such as `purge_cache`, to inspect its contents.
+
+Use a constructed `CloudflareApi` instance for discovery. Groups are generated when you construct it. Inspecting the class shows only `verify` and `create_token`.
+
+Find the endpoint in Cloudflare's API docs, or guess its path segments. Use the URL naming rule above to identify the call.
+
+If that does not find the operation, search `full_docs(cf.groups)`. It contains every group and operation in a Markdown reference of about 430,000 characters. Search it rather than displaying it, using `rgapi`'s `rgstr`:
+
+```python
+rgstr(pattern, full_docs(cf.groups))
+```
+
+Each matching line includes the dotted call path.
 
 # Results and errors
 
@@ -58,7 +72,15 @@ Browse permission-group names first if unsure:
     pgs = (await cf.user.tokens.permission_groups.get()).result
     [p.name for p in pgs if 'DNS' in p.name]
 
-Account-owned tokens (service principals, valid even after the creating user leaves) are created via `cf.accounts.tokens.post` instead, and their policies must nest zones under the account resource: `{f'com.cloudflare.api.account.{acct_id}': {'com.cloudflare.api.account.zone.*': '*'}}` -- a bare zone resource fails with "Must specify a zone for account owned tokens".
+Account-owned tokens act as service principals. They remain valid after the creating user leaves. Create them with `cf.accounts.tokens.post`.
+
+Their policies must nest zones under the account resource:
+
+```python
+{f'com.cloudflare.api.account.{acct_id}': {'com.cloudflare.api.account.zone.*': '*'}}
+```
+
+A bare zone resource fails with "Must specify a zone for account owned tokens".
 
 # Gotchas
 
