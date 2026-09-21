@@ -19,6 +19,9 @@ dependencies = [
   'fastspec>=0.2.2'
 ]
 
+[project.optional-dependencies]
+dev = ['httpx']
+
 [project.urls]
 Repository = "https://github.com/AnswerDotAI/fastcflare"
 Documentation = "https://AnswerDotAI.github.io/fastcflare/"
