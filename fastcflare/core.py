@@ -74,7 +74,12 @@ def _cf_spec():
 # %% ../nbs/00_core.ipynb #dd30d894
 class CloudflareApi:
     "Cloudflare API client supporting both user and account tokens"
-    def __init__(self, token=None, account_id=None, email=None, api_key=None):
+    def __init__(self,
+        token=None, # API token, defaulting to `CF_API_TOKEN` when neither `token` nor `api_key` is given
+        account_id=None, # Account that owns the token, for account-owned tokens
+        email=None, # Account email for a global API key, defaulting to `CF_API_EMAIL`
+        api_key=None, # Global API key, used with `email` in place of a token
+    ):
         if not token and not api_key: token = os.getenv('CF_API_TOKEN')
         if api_key and not email: email = os.getenv('CF_API_EMAIL')
         store_attr()
@@ -84,6 +89,7 @@ class CloudflareApi:
         self.groups = self.cli.groups
 
     async def verify(self):
+        "Check the credentials with the account token endpoint when `account_id` is set, else the user one. An active token has `.result.status == 'active'`."
         if self.account_id: return await self.accounts.tokens.verify.get(account_id=self.account_id)
         return await self.user.tokens.verify.get()
 
@@ -93,8 +99,14 @@ class CloudflareApi:
 
 # %% ../nbs/00_core.ipynb #de443569
 @patch
-async def create_token(self:CloudflareApi, doms, perm_names, name, grp='account.zone.'):
-    "Create a scoped Cloudflare API token for given domains and permission names"
+async def create_token(
+    self:CloudflareApi,
+    doms, # Domain names the token may act on
+    perm_names, # Permission-group names, such as 'Zone Read' or 'DNS Write'. Names that don't match are skipped
+    name, # Name for the new token
+    grp='account.zone.', # Resource prefix after `com.cloudflare.api.`
+):
+    "Create a user API token limited to `doms`. The token's value is shown only in this response."
     pref = 'com.cloudflare.api.'+grp
     pgs = (await self.user.tokens.permission_groups.get()).result
     perms = [dict(id=p.id) for p in pgs if p.name in perm_names]
