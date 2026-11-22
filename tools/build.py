@@ -1,6 +1,9 @@
 #!/usr/bin/env python
-"Regenerate fastcflare/cf_spec.py from Cloudflare's published OpenAPI schema."
+"Regenerate fastcflare/cf_spec.py and fastcflare/gql_spec.py from Cloudflare's schemas."
 from pathlib import Path
 from fastcflare.core import build_spec
+from fastcflare.graphql import build_gql_spec
 
-build_spec(nm=Path(__file__).parent.parent/'fastcflare'/'cf_spec.py')
+pkg = Path(__file__).parent.parent/'fastcflare'
+build_spec(nm=pkg/'cf_spec.py')
+build_gql_spec(nm=pkg/'gql_spec.py')
