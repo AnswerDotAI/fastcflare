@@ -20,7 +20,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ['httpx']
+dev = ['httpx', 'pyskills']
 
 [project.urls]
 Repository = "https://github.com/AnswerDotAI/fastcflare"
