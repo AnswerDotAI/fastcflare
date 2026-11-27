@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.11.9">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="description" content="Cloudflare REST client (CloudflareApi), token helpers, and r2_s3_creds">
+
+<title>FastCF – fastcflare</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/scrollable-regions/scrollable-regions.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-63b5708e65d6cd79cd7618c58d0c21e7.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-f803fa4e565d46961d2a1845e6c2e3f5.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "navbar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "end",
+  "type": "overlay",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "No results",
+    "search-matching-documents-text": "matching documents",
+    "search-copy-link-title": "Copy link to search",
+    "search-hide-matches-text": "Hide additional matches",
+    "search-more-match-text": "more match in this document",
+    "search-more-matches-text": "more matches in this document",
+    "search-clear-button-title": "Clear",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancel",
+    "search-submit-button-title": "Submit",
+    "search-label": "Search"
+  }
+}</script>
+
+
+<link rel="stylesheet" href="styles.css">
+<meta property="og:title" content="FastCF – fastcflare">
+<meta property="og:description" content="Cloudflare REST client (CloudflareApi), token helpers, and r2_s3_creds">
+<meta property="og:site_name" content="fastcflare">
+<meta name="twitter:title" content="FastCF – fastcflare">
+<meta name="twitter:description" content="Cloudflare REST client (CloudflareApi), token helpers, and r2_s3_creds">
+<meta name="twitter:card" content="summary">
+</head>
+
+<body class="nav-sidebar floating nav-fixed quarto-light"><a id="quarto-skip-link" class="visually-hidden-focusable" href="#quarto-document-content">Skip to main content</a>
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+    <nav class="navbar navbar-expand-lg " data-bs-theme="dark" aria-label="Site">
+      <div class="navbar-container container-fluid">
+      <div class="navbar-brand-container mx-auto">
+    <a class="navbar-brand" href="./index.html">
+    <span class="navbar-title">fastcflare</span>
+    </a>
+  </div>
+        <div class="quarto-navbar-tools tools-end">
+</div>
+          <div id="quarto-search" class="" title="Search"></div>
+      </div> <!-- /container-fluid -->
+    </nav>
+  <nav class="quarto-secondary-nav" aria-label="Toolbar">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Toggle sidebar navigation" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="Breadcrumbs"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./core.html">FastCF</a></li></ol></nav>
+        <a class="flex-grow-1" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article page-navbar">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation floating overflow-auto" aria-label="Section">
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">FastCF</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./core.html" class="sidebar-item-text sidebar-link active">
+ <span class="menu-text">FastCF</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./graphql.html" class="sidebar-item-text sidebar-link">
+ <span class="menu-text">graphql</span></a>
+  </div>
+</li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" aria-labelledby="toc-title" class="toc-active">
+    <h2 id="toc-title">On this page</h2>
+   
+  <ul>
+  <li><a href="#cloudflareapi" id="toc-cloudflareapi" class="nav-link active" data-scroll-target="#cloudflareapi">CloudflareApi</a></li>
+  <li><a href="#r2-tokens-and-s3-credentials" id="toc-r2-tokens-and-s3-credentials" class="nav-link" data-scroll-target="#r2-tokens-and-s3-credentials">R2 tokens and S3 credentials</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/AnswerDotAI/fastcflare/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div><div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="core.html.md"><i class="bi bi-file-code"></i>Markdown</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content" tabindex="-1">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">FastCF</h1>
+</div>
+
+<div>
+  <div class="description">
+    Cloudflare REST client (<code>CloudflareApi</code>), token helpers, and <code>r2_s3_creds</code>
+  </div>
+</div>
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<!-- WARNING: THIS FILE WAS AUTOGENERATED! DO NOT EDIT! -->
+<div id="444fa916" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-27T22:56:55.929709+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-27T22:56:55.941444+00:00&quot;,&quot;total&quot;:0.0117385069999969}}" data-execution_count="2">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> httpx</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> collections <span class="im">import</span> Counter</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="4995c29c" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>tok <span class="op">=</span> os.environ[<span class="st">'CLOUDFLARE_API_TOKEN'</span>]</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>acctid <span class="op">=</span> os.getenv(<span class="st">'CLOUDFLARE_ACCOUNT_ID'</span>)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>email <span class="op">=</span> os.getenv(<span class="st">'CLOUDFLARE_EMAIL'</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>api_key <span class="op">=</span> os.getenv(<span class="st">'CLOUDFLARE_API_KEY'</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="05eccc0a" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>base <span class="op">=</span> <span class="st">'https://api.cloudflare.com/client/v4'</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="fcac888a" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>uhdrs <span class="op">=</span> {<span class="st">'Authorization'</span>: <span class="ss">f'Bearer </span><span class="sc">{</span>tok<span class="sc">}</span><span class="ss">'</span>}</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> httpx.get(<span class="ss">f'</span><span class="sc">{</span>base<span class="sc">}</span><span class="ss">/user/tokens/verify'</span>, headers<span class="op">=</span>uhdrs)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>r.json()[<span class="st">'success'</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>True</code></pre>
+</div>
+</div>
+<div id="cd0a3e21" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> email <span class="kw">and</span> api_key:</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>    ghdrs <span class="op">=</span> {<span class="st">'X-Auth-Email'</span>: email, <span class="st">'X-Auth-Key'</span>: api_key, <span class="st">'Content-Type'</span>: <span class="st">'application/json'</span>}</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    r <span class="op">=</span> httpx.get(<span class="ss">f'</span><span class="sc">{</span>base<span class="sc">}</span><span class="ss">/user'</span>, headers<span class="op">=</span>ghdrs)</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="bu">print</span>(r.json()[<span class="st">'success'</span>])</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>True</code></pre>
+</div>
+</div>
+<div id="304df5de" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>r <span class="op">=</span> httpx.get(<span class="ss">f'</span><span class="sc">{</span>base<span class="sc">}</span><span class="ss">/zones'</span>, headers<span class="op">=</span>uhdrs)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>[(z[<span class="st">'name'</span>], z[<span class="st">'id'</span>][:<span class="dv">8</span>]) <span class="cf">for</span> z <span class="kw">in</span> r.json()[<span class="st">'result'</span>][:<span class="dv">1</span>]]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>[('aaa.as', '6afde8dc')]</code></pre>
+</div>
+</div>
+<section id="cloudflareapi" class="level2">
+<h2 class="anchored" data-anchor-id="cloudflareapi">CloudflareApi</h2>
+<p>Cloudflare’s operationIds are machine artifacts (<code>zones-get</code> vs <code>zones-0-get</code> — the <code>-0-</code> is a generator’s dedup counter), so rather than cleaning them up we name every op mechanically from its verb and path: the group is the path’s non-parameter segments, nested (<code>zones.dns_records</code>), and the method is the HTTP verb — except that when a group has both a collection GET and a single-item GET they become <code>list</code> and <code>get</code>. Two fixups keep the whole surface collision-free: sibling paths differing only by an interior parameter gain a <code>_by_&lt;param&gt;</code> suffix, and an action segment that would shadow an op folds into its parent as <code>&lt;segment&gt;_&lt;verb&gt;</code>. So <code>GET /zones</code> is <code>zones.list</code>, <code>GET /zones/{zone_id}</code> is <code>zones.get</code>, and <code>GET /user/tokens/verify</code> is <code>user.tokens.verify.get</code> — a user who knows the URL knows the call.</p>
+<div id="e90e33c9" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-27T22:56:55.948021+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-27T22:56:56.025310+00:00&quot;,&quot;total&quot;:0.07729454200000418}}" data-execution_count="5">
+<hr>
+<p><a href="https://github.com/AnswerDotAI/fastcflare/blob/main/fastcflare/core.py#L27" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="cf_names" class="level3">
+<h3 class="anchored" data-anchor-id="cf_names">cf_names</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb10"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cf_names(</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    spec</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Map each op’s canonical (verb, snaked-segments) key to (group_segments, op_name), collision-free across the surface</em></p>
+</section>
+</div>
+<div id="66b2268b" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-27T22:56:56.026396+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-27T22:56:56.029141+00:00&quot;,&quot;total&quot;:0.002748069000006126}}" data-execution_count="7">
+<hr>
+<p><a href="https://github.com/AnswerDotAI/fastcflare/blob/main/fastcflare/core.py#L61" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="cf_group_func" class="level3">
+<h3 class="anchored" data-anchor-id="cf_group_func">cf_group_func</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb11"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> cf_group_func(</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    names</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>A fastspec <code>group_func</code> looking up precomputed <code>names</code> by canonical verb+path</em></p>
+</section>
+</div>
+<p>The parsed surface ships with the package as <code>cf_spec.py</code>, fastspec’s compact form (<code>SpecParser.save</code>): 2.6MB instead of the 8MB raw schema, loaded in ~30ms instead of a ~0.3s parse, with the naming machinery above running only at regeneration time. <a href="https://AnswerDotAI.github.io/fastcflare/core.html#build_spec"><code>build_spec</code></a> refreshes it from Cloudflare’s published schema; op names can shift when the spec changes, so review that diff before shipping it.</p>
+<div id="a338688c" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-27T22:56:56.030337+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-27T22:56:56.032995+00:00&quot;,&quot;total&quot;:0.0026602790000040955}}" data-execution_count="9">
+<hr>
+<p><a href="https://github.com/AnswerDotAI/fastcflare/blob/main/fastcflare/core.py#L69" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="build_spec" class="level3">
+<h3 class="anchored" data-anchor-id="build_spec">build_spec</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb12"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> build_spec(</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    nm:<span class="bu">str</span><span class="op">=</span><span class="st">'fastcflare/cf_spec.py'</span>,</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    url:<span class="bu">str</span><span class="op">=</span><span class="st">'https://raw.githubusercontent.com/cloudflare/api-schemas/main/openapi.json'</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Regenerate the compact spec module <code>cf_spec.py</code> from Cloudflare’s OpenAPI schema.</em></p>
+</section>
+</div>
+<div id="ad56e23f" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>cli <span class="op">=</span> OpenAPIClient(_cf_spec(), headers<span class="op">=</span>{<span class="st">'Authorization'</span>: <span class="ss">f'Bearer </span><span class="sc">{</span>tok<span class="sc">}</span><span class="ss">'</span>, <span class="st">'Content-Type'</span>: <span class="st">'application/json'</span>})</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a><span class="bu">sorted</span>(cli.groups)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>['accounts',
+ 'certificates',
+ 'internal',
+ 'ips',
+ 'live',
+ 'memberships',
+ 'organizations',
+ 'radar',
+ 'ready',
+ 'signed_url',
+ 'system',
+ 'tenants',
+ 'user',
+ 'users',
+ 'zones']</code></pre>
+</div>
+</div>
+<p>The naming is only trustworthy if it can never silently collide — <code>OpGroup</code> exposes ops with <code>setattr</code>, so a duplicate name would shadow its sibling (exactly the bug this design replaces). This walk asserts the built tree is clean: within every group, op names are unique (duplicates allowed only for the same endpoint spelled two ways in the spec) and no op shares a name with a subgroup.</p>
+<div id="d670e58e" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> _surface_ok(g):</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    nms <span class="op">=</span> [o.name <span class="cf">for</span> o <span class="kw">in</span> g.ops]</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> n,c <span class="kw">in</span> Counter(nms).items():</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> c<span class="op">&gt;</span><span class="dv">1</span>: <span class="cf">assert</span> <span class="bu">len</span>({<span class="bu">tuple</span>(snake(s) <span class="cf">for</span> s <span class="kw">in</span> o.op_spec.path.strip(<span class="st">'/'</span>).split(<span class="st">'/'</span>)) <span class="cf">for</span> o <span class="kw">in</span> g.ops <span class="cf">if</span> o.name<span class="op">==</span>n})<span class="op">==</span><span class="dv">1</span>, <span class="ss">f'dup op </span><span class="sc">{</span>g<span class="sc">.</span>name<span class="sc">}</span><span class="ss">.</span><span class="sc">{</span>n<span class="sc">}</span><span class="ss">'</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> <span class="kw">not</span> <span class="bu">set</span>(nms)<span class="op">&amp;</span><span class="bu">set</span>(g.subgroups), <span class="ss">f'op/subgroup shadow in </span><span class="sc">{</span>g<span class="sc">.</span>name<span class="sc">}</span><span class="ss">: </span><span class="sc">{</span><span class="bu">set</span>(nms)<span class="op">&amp;</span><span class="bu">set</span>(g.subgroups)<span class="sc">}</span><span class="ss">'</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> sg <span class="kw">in</span> g.subgroups.values(): _surface_ok(sg)</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> grp <span class="kw">in</span> cli.groups.values(): _surface_ok(grp)</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a><span class="bu">len</span>(cli.groups), <span class="bu">len</span>(cli.groups[<span class="st">'zones'</span>].subgroups)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>(15, 60)</code></pre>
+</div>
+</div>
+<div id="65fa17ab" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-27T22:56:56.036964+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-27T22:56:56.040039+00:00&quot;,&quot;total&quot;:0.0030785720000068295}}" data-execution_count="11">
+<hr>
+<p><a href="https://github.com/AnswerDotAI/fastcflare/blob/main/fastcflare/core.py#L96" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="cloudflareapi-1" class="level3">
+<h3 class="anchored" data-anchor-id="cloudflareapi-1">CloudflareApi</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb17"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> CloudflareApi(</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>    token:NoneType<span class="op">=</span><span class="va">None</span>, <span class="co"># API token; defaults to `CLOUDFLARE_API_TOKEN` when `api_key` and `email` aren't given</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>    account_id:NoneType<span class="op">=</span><span class="va">None</span>, <span class="co"># Account ID; defaults to `CLOUDFLARE_ACCOUNT_ID`</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    email:NoneType<span class="op">=</span><span class="va">None</span>, <span class="co"># Account email for a global API key; defaults to `CLOUDFLARE_EMAIL`</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    api_key:NoneType<span class="op">=</span><span class="va">None</span>, <span class="co"># Global API key; defaults to `CLOUDFLARE_API_KEY` when no token is given or set</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    account_token:<span class="bu">bool</span><span class="op">=</span><span class="va">False</span>, <span class="co"># Is `token` an account-owned token (uses `/accounts/{account_id}/tokens/verify`)?</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Cloudflare API client supporting user tokens, account tokens, and global API keys</em></p>
+</section>
+</div>
+<div id="110cfeb9" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>ucf <span class="op">=</span> CloudflareApi()</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>(<span class="cf">await</span> ucf.verify()).result.status</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>'active'</code></pre>
+</div>
+</div>
+<p>Listing and fetching zones are now distinct calls: <code>zones.list</code> filters the collection, <code>zones.get</code> takes a <code>zone_id</code>.</p>
+<div id="67b400b3" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>ucf.zones.<span class="bu">list</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display cell-output-markdown">
+<p>List Zones</p>
+<p>Parameters: - name (str, optional) - status (str, optional) - account_id (str, optional) - account_name (str, optional) - order (str, optional) - direction (str, optional) - page (float, default: 1) - per_page (float, default: 20) - match (str, default: ‘all’)</p>
+</div>
+</div>
+<div id="1ce7db78" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>(<span class="cf">await</span> ucf.zones.<span class="bu">list</span>(name<span class="op">=</span><span class="st">'answer.ai'</span>)).result[<span class="dv">0</span>].name</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>'answer.ai'</code></pre>
+</div>
+</div>
+<div id="ee5f5429" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>zid <span class="op">=</span> (<span class="cf">await</span> ucf.zones.<span class="bu">list</span>()).result[<span class="dv">0</span>].<span class="bu">id</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>(<span class="cf">await</span> ucf.zones.dns_records.<span class="bu">list</span>(zone_id<span class="op">=</span>zid)).result[<span class="dv">0</span>].name</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>'*.aaa.as'</code></pre>
+</div>
+</div>
+<div id="aa6fe45d" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-27T22:56:56.042461+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-27T22:56:56.045744+00:00&quot;,&quot;total&quot;:0.0032851240000013604}}" data-execution_count="13">
+<hr>
+<p><a href="https://github.com/AnswerDotAI/fastcflare/blob/main/fastcflare/core.py#L122" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="cloudflareapi.create_token" class="level3">
+<h3 class="anchored" data-anchor-id="cloudflareapi.create_token">CloudflareApi.create_token</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb25"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="kw">def</span> create_token(</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>    doms, <span class="co"># Domain names the token may act on</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>    perm_names, <span class="co"># Permission-group names, such as 'Zone Read' or 'DNS Write'. Names that don't match are skipped</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>    name, <span class="co"># Name for the new token</span></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>    grp:<span class="bu">str</span><span class="op">=</span><span class="st">'account.zone.'</span>, <span class="co"># Resource prefix after `com.cloudflare.api.`</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>    account_token:<span class="bu">bool</span><span class="op">=</span><span class="va">False</span>, <span class="co"># Create an account-owned token (nests zone resources under `account_id`)?</span></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>    account_id:<span class="bu">str</span><span class="op">=</span><span class="va">None</span>, <span class="co"># Account ID for account-owned tokens; defaults to `self.account_id`</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>):</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Create a user or account-owned API token limited to <code>doms</code>. The token’s value is shown only in this response.</em></p>
+</section>
+</div>
+<div id="f766ec94" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>pgs <span class="op">=</span> (<span class="cf">await</span> ucf.user.tokens.permission_groups.get()).result</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>[p.name <span class="cf">for</span> p <span class="kw">in</span> pgs <span class="cf">if</span> <span class="st">'DNS'</span> <span class="kw">in</span> p.name <span class="kw">or</span> <span class="st">'Zone'</span> <span class="kw">in</span> p.name][:<span class="dv">20</span>]</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>['Account DNS Settings Read',
+ 'Account DNS Settings Write',
+ 'Cloudflare Zero Trust Secure DNS Locations Write',
+ 'DNS Firewall Read',
+ 'DNS Firewall Write',
+ 'DNS Read',
+ 'DNS View Read',
+ 'DNS View Write',
+ 'DNS Write',
+ 'Zone Custom Asset Read',
+ 'Zone Custom Asset Write',
+ 'Zone DNS Settings Read',
+ 'Zone DNS Settings Write',
+ 'Zone Read',
+ 'Zone Security Center Insights Read',
+ 'Zone Security Center Insights Write',
+ 'Zone Settings Read',
+ 'Zone Settings Write',
+ 'Zone Transform Rules Read',
+ 'Zone Transform Rules Write']</code></pre>
+</div>
+</div>
+<p>With two domains, the policy must carry two distinct zone resources — under the old colliding surface the <code>name</code> filter was silently dropped, every domain resolved to the same zone, and the dict collapsed them to one:</p>
+<div id="bb54b044" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb28"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>tok <span class="op">=</span> <span class="cf">await</span> ucf.create_token([<span class="st">'answer.ai'</span>, <span class="st">'aaa.as'</span>], [<span class="st">'Zone Read'</span>], <span class="st">'fastcflare-test-token'</span>)</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> <span class="bu">len</span>(tok.result.policies[<span class="dv">0</span>].resources)<span class="op">==</span><span class="dv">2</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>tok.success, tok.result.name</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-display">
+<pre><code>(True, 'fastcflare-test-token')</code></pre>
+</div>
+</div>
+<p>Clean up the token we just created:</p>
+<div id="e8a45ad5" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb30"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>res <span class="op">=</span> <span class="cf">await</span> ucf.user.tokens.delete(tok.result.<span class="bu">id</span>)</span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> res.success</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="r2-tokens-and-s3-credentials" class="level2">
+<h2 class="anchored" data-anchor-id="r2-tokens-and-s3-credentials">R2 tokens and S3 credentials</h2>
+<p>Cloudflare R2 S3 credentials derive directly from an R2 API token: <code>access_key_id</code> is the token ID and <code>secret_access_key</code> is the SHA-256 hex digest of the token value. <code>create_r2_token</code> creates either an account-owned service token (default) or a user token, scoped to specific buckets or the whole account, and returns both the API response and derived S3 credentials.</p>
+<div id="246f42f0" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-27T22:56:56.046934+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-27T22:56:56.049035+00:00&quot;,&quot;total&quot;:0.0021037039999995955}}" data-execution_count="15">
+<hr>
+<p><a href="https://github.com/AnswerDotAI/fastcflare/blob/main/fastcflare/core.py#L143" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="r2_s3_creds" class="level3">
+<h3 class="anchored" data-anchor-id="r2_s3_creds">r2_s3_creds</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb31"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> r2_s3_creds(</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>    token_id:<span class="bu">str</span>, <span class="co"># Cloudflare API token ID (becomes `access_key_id`)</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    token_value:<span class="bu">str</span>, <span class="co"># Cloudflare API token secret value (SHA-256 hex becomes `secret_access_key`)</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    account_id:<span class="bu">str</span><span class="op">=</span><span class="va">None</span>, <span class="co"># Account ID; defaults to `CLOUDFLARE_ACCOUNT_ID`</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    jurisdiction:<span class="bu">str</span><span class="op">=</span><span class="st">'default'</span>, <span class="co"># R2 jurisdiction (`'default'`, `'eu'`, `'fedramp'`)</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>fastcore.basics.AttrDict:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Derive S3-compatible R2 credentials (<code>access_key_id</code>, <code>secret_access_key</code>, <code>endpoint</code>, <code>region</code>) from a Cloudflare R2 API token.</em></p>
+</section>
+</div>
+<p><a href="https://AnswerDotAI.github.io/fastcflare/core.html#r2_s3_creds"><code>r2_s3_creds</code></a> derives S3 credentials offline from any existing token pair:</p>
+<div id="ede4a6f1" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb32"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>creds <span class="op">=</span> r2_s3_creds(<span class="st">'tok-id'</span>, <span class="st">'tok-val'</span>, account_id<span class="op">=</span><span class="st">'acct123'</span>)</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> <span class="bu">len</span>(creds.secret_access_key) <span class="op">==</span> <span class="dv">64</span> <span class="kw">and</span> creds.endpoint <span class="op">==</span> <span class="st">'https://acct123.r2.cloudflarestorage.com'</span></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>creds.endpoint, creds.region</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="2c7739f1" class="cell" data-quarto-private-1="{&quot;key&quot;:&quot;execution&quot;,&quot;value&quot;:{&quot;iopub.execute_input&quot;:&quot;2026-11-27T22:56:56.050987+00:00&quot;,&quot;shell.execute_reply&quot;:&quot;2026-11-27T22:56:56.053866+00:00&quot;,&quot;total&quot;:0.0028817130000007296}}" data-execution_count="17">
+<hr>
+<p><a href="https://github.com/AnswerDotAI/fastcflare/blob/main/fastcflare/core.py#L158" target="_blank" style="float:right; font-size:smaller">source</a></p>
+<section id="cloudflareapi.create_r2_token" class="level3">
+<h3 class="anchored" data-anchor-id="cloudflareapi.create_r2_token">CloudflareApi.create_r2_token</h3>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb33"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="cf">async</span> <span class="kw">def</span> create_r2_token(</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>    name:<span class="bu">str</span>, <span class="co"># Name for the new R2 token</span></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>    buckets:NoneType<span class="op">=</span><span class="va">None</span>, <span class="co"># Bucket name or iterable of bucket names; None grants account-wide R2 access</span></span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>    write:<span class="bu">bool</span><span class="op">=</span><span class="va">True</span>, <span class="co"># Grant read/write access (False for read-only)</span></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>    account_id:<span class="bu">str</span><span class="op">=</span><span class="va">None</span>, <span class="co"># Account ID; defaults to `self.account_id`</span></span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>    account_token:<span class="bu">bool</span><span class="op">=</span><span class="va">True</span>, <span class="co"># Create an account-owned service token (False for a user-owned token)</span></span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>    jurisdiction:<span class="bu">str</span><span class="op">=</span><span class="st">'default'</span>, <span class="co"># R2 jurisdiction for bucket-scoped resources (`'default'`, `'eu'`, `'fedramp'`)</span></span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>    expires_on:<span class="bu">str</span><span class="op">=</span><span class="va">None</span>, <span class="co"># Optional RFC3339 expiration timestamp</span></span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>)<span class="op">-&gt;</span>fastcore.basics.AttrDict:</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p><em>Create a Cloudflare R2 API token and return both the API response (<code>token</code>) and derived S3 credentials (<code>s3</code>).</em></p>
+</section>
+</div>
+<p>Global API key authentication fills <code>email</code> and <code>account_id</code> from <code>CLOUDFLARE_EMAIL</code> and <code>CLOUDFLARE_ACCOUNT_ID</code>:</p>
+<div id="b864c4d8" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb34"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> api_key <span class="kw">and</span> email <span class="kw">and</span> acctid:</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    gcf <span class="op">=</span> CloudflareApi(api_key<span class="op">=</span>api_key)</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> (<span class="cf">await</span> gcf.verify()).success</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div id="e3b0cb74" class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb35"><pre class="sourceCode python code-with-copy"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> api_key <span class="kw">and</span> email <span class="kw">and</span> acctid:</span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>    r2 <span class="op">=</span> <span class="cf">await</span> gcf.create_r2_token(<span class="st">'fastcflare-r2-test-token'</span>, buckets<span class="op">=</span><span class="st">'fastcflare-test-bucket'</span>, write<span class="op">=</span><span class="va">False</span>)</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">assert</span> r2.token.success <span class="kw">and</span> <span class="bu">len</span>(r2.s3.secret_access_key) <span class="op">==</span> <span class="dv">64</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>        r2_cf <span class="op">=</span> CloudflareApi(token<span class="op">=</span>r2.token.result.value, account_token<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">assert</span> (<span class="cf">await</span> r2_cf.verify()).result.status <span class="op">==</span> <span class="st">'active'</span></span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">finally</span>: <span class="cf">assert</span> (<span class="cf">await</span> gcf.accounts.tokens.delete(acctid, r2.token.result.<span class="bu">id</span>)).success</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>    r2.s3.endpoint, r2.s3.region</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp("https:\/\/AnswerDotAI\.github\.io\/fastcflare");
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+      window.quartoDecorateExternalLinks = function (root) {
+     var links = (root || window.document).querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+          if (!link.classList.contains('no-external-icon')) {
+          }
+        }
+      }
+      };
+      window.quartoDecorateExternalLinks(window.document);
+    // Esc closes the popup (WCAG 1.4.13) and focus leaving both trigger and
+    // popup closes it (WCAG 2.4.11); tippy handles neither for interactive popups.
+    const hideOnEscAndFocusOut = {
+      name: 'hideOnEscAndFocusOut',
+      defaultValue: true,
+      fn(instance) {
+        const dismiss = () => {
+          // A show scheduled by the trigger delay would otherwise reopen it
+          instance.clearDelayTimeouts();
+          instance.hide();
+        };
+        const onKeyDown = (event) => {
+          if (event.key !== 'Escape') {
+            return;
+          }
+          // Keep Esc from also reaching page handlers (e.g. reveal.js overview),
+          // except an open reveal.js slide menu, which Esc should close too.
+          // The menu handles keys only when its keyboard option is on.
+          const menuHandlesEsc = window.Reveal?.getPlugin?.('menu')?.isOpen() &&
+            window.Reveal.getConfig().menu?.keyboard !== false;
+          if (!menuHandlesEsc) {
+            event.stopPropagation();
+          }
+          if (instance.popper.contains(window.document.activeElement)) {
+            // Disabled while refocusing so the focus trigger does not reopen it
+            instance.disable();
+            instance.reference.focus();
+            instance.enable();
+          }
+          dismiss();
+        };
+        const onFocusOut = (event) => {
+          const target = event.relatedTarget;
+          if (target && !instance.reference.contains(target) &&
+              !instance.popper.contains(target)) {
+            dismiss();
+          }
+        };
+        // On the trigger too: a click trigger (code-annotations: select) has no
+        // blur handling. Attached for the instance's lifetime so leaving the
+        // trigger also cancels a show still pending on the trigger delay.
+        instance.reference.addEventListener('focusout', onFocusOut);
+        return {
+          onShow() {
+            window.document.addEventListener('keydown', onKeyDown, true);
+            instance.popper.addEventListener('focusout', onFocusOut);
+          },
+          onHide() {
+            window.document.removeEventListener('keydown', onKeyDown, true);
+            instance.popper.removeEventListener('focusout', onFocusOut);
+          },
+          onDestroy() {
+            instance.reference.removeEventListener('focusout', onFocusOut);
+          },
+        };
+      },
+    };
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+        plugins: [hideOnEscAndFocusOut],
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          // Each band is positioned against its own containing block, which is
+          // not the offsetParent of the lines, so place it from client rects.
+          const placeBand = (band, firstEl, lastEl, codeBlock) => {
+            const container = band.offsetParent;
+            if (container === null) {
+              return;
+            }
+            const containerRect = container.getBoundingClientRect();
+            // Reveal.js scales slides with a transform, so convert client
+            // pixels back to the CSS pixels of the container.
+            const scale = containerRect.height / container.offsetHeight || 1;
+            const firstRect = firstEl.getBoundingClientRect();
+            const lastRect = lastEl.getBoundingClientRect();
+            const top = (firstRect.top - containerRect.top) / scale - container.clientTop + container.scrollTop;
+            const height = (lastRect.bottom - firstRect.top) / scale;
+            band.style.top = top - 2 + "px";
+            band.style.height = height + 4 + "px";
+            if (codeBlock) {
+              // Without the copy button wrapper, the containing block is wider
+              // than the code block, so span the code block explicitly.
+              const blockRect = codeBlock.getBoundingClientRect();
+              band.style.left = (blockRect.left - containerRect.left) / scale - container.clientLeft + container.scrollLeft + "px";
+              band.style.width = blockRect.width / scale + "px";
+            }
+          };
+          if (lineIds.length > 0) {
+            const el = window.document.getElementById(lineIds[0]);
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const parent = el.parentElement.parentElement;
+            // cook up a div (if necessary) and position it
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            placeBand(div, el, lastEl, parent.closest("div.sourceCode") || parent);
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            placeBand(gutterDiv, el, lastEl);
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+  <script type="application/javascript">
+  window.quartoScrollableRegionsLabels = {"code":"Scrollable code","output":"Scrollable output"};
+  </script>
+</div> <!-- /content -->
+
+
+
+
+<footer class="footer"><div class="nav-footer"><div class="nav-footer-center"><div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/AnswerDotAI/fastcflare/issues/new" class="toc-action"><i class="bi bi-github"></i>Report an issue</a></li></ul></div></div></div></footer></body></html>
