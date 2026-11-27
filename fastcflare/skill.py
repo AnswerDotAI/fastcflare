@@ -1,5 +1,4 @@
-# NB: this file is designed for an LLM reader, not a human. Add it to your LLM's context and ask it to explain.
-"""Cloudflare REST (`CloudflareApi`) and GraphQL Analytics (`CfGql`) access from Python: zones, DNS records, R2 buckets and S3 tokens, caching, Workers, and analytics. Use this instead of hand-built httpx calls against api.cloudflare.com.
+r"""Cloudflare REST (`CloudflareApi`) and GraphQL Analytics (`CfGql`) access from Python: zones, DNS records, R2 buckets and S3 tokens, caching, Workers, and analytics. Use this instead of hand-built httpx calls against api.cloudflare.com.
 
 notation: /why
 
@@ -7,27 +6,27 @@ notation: /why
 - GraphQL Analytics (`CfGql`): bundled distilled schema (`fastcflare.gql_spec`) for R2, Workers, KV, D1, DNS, HTTP, and WAF datasets (GraphQL-only in Cloudflare)
 - every call async, including `verify`, `create_token`, and `create_r2_token`
 
-## Auth and env vars
+### Auth and env vars
 
 - standard env vars: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_KEY`, `CLOUDFLARE_EMAIL`
 - `CloudflareApi()` / `CfGql()`: default `account_id` from `CLOUDFLARE_ACCOUNT_ID`; auth uses explicit `token`, else explicit `api_key`/`email` (defaulting the other from env), else `CLOUDFLARE_API_TOKEN`, else `CLOUDFLARE_API_KEY` + `CLOUDFLARE_EMAIL`
 - global API key when `CLOUDFLARE_API_TOKEN` is also set: `CloudflareApi(api_key=os.environ['CLOUDFLARE_API_KEY'])` (fills `email` and `account_id` from env)
 - account-owned token: pass `account_token=True` so `verify()` hits `/accounts/{account_id}/tokens/verify` instead of `/user/tokens/verify`
 
-## REST names: from verb and URL path, not operation IDs
+### REST names: from verb and URL path, not operation IDs
 
 - group: path's non-parameter segments, nested: `/zones/{zone_id}/dns_records` → `cf.zones.dns_records`
 - method: lowercase verb; group with both collection and single-item GET uses `.list` and `.get`; single GET uses `.get`
 - rare collisions: siblings differing only by interior param gain `_by_<param>`; action segment shadowing an op becomes `<segment>_<verb>` on parent
 - route params (`account_id`, `zone_id`, ...) by position or keyword; query and body params by keyword
 
-## Finding REST operations
+### Finding REST operations
 
 - start from Cloudflare doc URL or guessed path segments through naming rules; drill down with bare display / `doc()`: `cf` → `doc(cf.zones)` → `doc(cf.zones.dns_records.post)`
 - deep groups: `pyskills.xdir(cf.zones, 'cache')`, then `doc()` a match
 - fallback: `rgstr(pattern, full_docs(cf.groups))`; never display the ~430,000-character reference
 
-## Results
+### Results
 
 - REST envelope: `.success`, `.result` (list for collections), `.errors`, `.messages`; list pagination via `page`, `per_page`, `.result_info` (no auto-paging helper)
 - HTTP failure: raises `fasttransport.errors.APIError` (`.status_code`, Cloudflare error JSON)
@@ -39,14 +38,14 @@ rec = await cf.zones.dns_records.post(zid, type='A', name='test.example.com', co
 await cf.zones.dns_records.delete(zid, rec.result.id)
 ```
 
-## Tokens and R2 S3 credentials
+### Tokens and R2 S3 credentials
 
 - check permission-group names first: `[p.name for p in (await cf.user.tokens.permission_groups.get()).result if 'DNS' in p.name]`    /`create_token` skips unmatched names
 - zone token: `tok = await cf.create_token(['example.com'], ('Zone Read', 'DNS Write'), 'dns mgt', account_token=False)`; save `tok.result.value` now    /shown only once
 - R2 token + S3 creds: `r2 = await cf.create_r2_token('sccache', buckets='aai-sccache', write=True)` (default `account_token=True`; `buckets=None` for account-wide R2); returns `AttrDict(token=..., s3=AttrDict(access_key_id, secret_access_key, endpoint, region))`; new tokens take ~2-4s to propagate to Cloudflare's S3 edge
 - derive S3 creds from an existing token pair: `r2_s3_creds(token_id, token_value, account_id=None, jurisdiction='default')` (`secret_access_key = sha256(token_value).hexdigest()`)
 
-## GraphQL Analytics (`CfGql`)
+### GraphQL Analytics (`CfGql`)
 
 - discover datasets and filter/orderBy types offline: `xdir(gql.account(), 'r2')`, `doc(gql.account().r2StorageAdaptiveGroups)`, `doc(gql.t.AccountR2StorageAdaptiveGroupsFilter_InputObject)`
 - `gql.account(account_id=None)` and `gql.zone(zone_id)` return filtered `viewer.accounts` / `viewer.zones` fragments; since `viewer.accounts` is a list, awaiting returns a 1-element list `[rows]`
